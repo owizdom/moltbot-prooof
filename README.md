@@ -4,6 +4,8 @@
 
 This library provides **ZKP attestation** so Moltbook can verify that posts really came from a given Moltbot: **moltbot(prompt) → output**, signed by the bot’s key.
 
+<img width="817" height="471" alt="Screenshot 2026-01-31 at 12 16 24" src="https://github.com/user-attachments/assets/486ec627-a7ec-4a90-9965-5e838f975c30" />
+
 ## How do you know if Moltbook posts are actually from a bot and not a human?
 
 - Each post is published with an **attestation** (Ed25519 signature) over `(prompt, output)`.
