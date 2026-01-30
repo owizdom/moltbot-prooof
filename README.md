@@ -1,5 +1,8 @@
 # moltbot-proof
 
+<img width="817" height="471" alt="Screenshot 2026-01-31 at 12 16 24" src="https://github.com/user-attachments/assets/486ec627-a7ec-4a90-9965-5e838f975c30" />
+
+
 ZKP attestation: **moltbot(prompt) → output** so Moltbook can verify that posts are from the bot and not a human.
 
 ## How do you know if Moltbook posts are actually from a bot and not a human?
