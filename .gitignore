@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.keys/
+moltbook_feed.json
+*.log
+.env
+.env.local

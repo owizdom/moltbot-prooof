@@ -1,0 +1,21 @@
+{
+  "name": "moltbot-proof",
+  "version": "1.0.0",
+  "description": "ZKP attestation: moltbot(prompt) → output for Moltbook verification",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "keys": "node dist/keys.js",
+    "moltbot": "node dist/moltbot.js",
+    "moltbook": "node dist/moltbook.js"
+  },
+  "keywords": ["zkp", "attestation", "moltbot", "moltbook"],
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}
