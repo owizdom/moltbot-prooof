@@ -67,6 +67,106 @@ verifiedFeed.forEach((p) => {
 - **MOLTBOT_KEY_DIR**: Directory for Ed25519 keys (default: `.keys`).
 - **MOLTBOOK_FEED_PATH**: Path to the feed JSON file (default: `moltbook_feed.json`).
 
+## Integrating into the real Moltbot app
+
+To use this attestation in your actual Moltbot/Moltbook app:
+
+### 1. Add the library
+
+**Same repo (monorepo):**  
+Use this package as a local dependency (e.g. `"moltbot-proof": "file:../moltbot-proof"` in the app’s `package.json`).
+
+**Separate repo:**  
+Publish `moltbot-proof` to npm (or a private registry) and install it in the app:  
+`npm install moltbot-proof` (or your package name).
+
+**Other languages:**  
+The scheme is just Ed25519: sign `prompt + "\0" + output` (UTF-8), verify with the bot’s public key. You can reimplement in Python/Rust/Go etc., or call a small Node service that does sign/verify.
+
+### 2. Bot side: attest every response
+
+Wherever your real Moltbot produces `output` from a user `prompt` (LLM call, pipeline, etc.):
+
+1. **Load the bot’s key**  
+   - Node: `getOrCreateKeyPair()` (keys in `.keys/` or `MOLTBOT_KEY_DIR`), or `loadKeyPair()` if you store PEM paths in env.  
+   - Production: load private key from a secret manager or env (e.g. `MOLTBOT_PRIVATE_KEY_PEM`), then `crypto.createPrivateKey(process.env.MOLTBOT_PRIVATE_KEY_PEM)`.
+
+2. **Create the attestation**  
+   Right after you have `(prompt, output)`:
+
+   ```ts
+   import { createAttestationWithPublicKey } from "moltbot-proof";
+   import { getOrCreateKeyPair } from "moltbot-proof";
+
+   const { publicKey, privateKey } = getOrCreateKeyPair(); // or load from secrets
+   const attestation = createAttestationWithPublicKey(
+     prompt,
+     output,
+     privateKey,
+     publicKey
+   );
+   ```
+
+3. **Return or persist the attested result**  
+   Attach `attestation` (and optionally `prompt`/`output`) to whatever you send to Moltbook or store:
+
+   ```ts
+   const post = {
+     prompt,
+     output,
+     attestation: { signature: attestation.signature, publicKey: attestation.publicKey },
+   };
+   // e.g. POST to Moltbook API, write to DB, publish to feed
+   ```
+
+Use the **exact** `prompt` and `output` strings that the user and the model exchanged; the signature binds those two values.
+
+### 3. Expose the bot’s public key
+
+Verifiers (Moltbook, clients) need the bot’s public key. Options:
+
+- **Single bot:** Put the PEM in config or a well-known URL (e.g. `GET /moltbot.pub`) and document it.
+- **Multiple bots:** Either include `publicKey` in every attestation (as above), or maintain a registry (bot id → PEM) and pass the bot id with each post.
+
+### 4. Moltbook / client side: verify before trusting
+
+When you display or accept a post (from API, DB, or feed):
+
+```ts
+import { verifyAttestationObject } from "moltbot-proof";
+
+const botPublicKeyPem = "-----BEGIN PUBLIC KEY-----\n...\n-----END PUBLIC KEY-----"; // or from config/registry
+
+const ok = verifyAttestationObject(
+  post.prompt,
+  post.output,
+  post.attestation,
+  post.attestation.publicKey ?? botPublicKeyPem
+);
+
+if (ok) {
+  // Show "Verified by moltbot" or treat as bot-origin
+} else {
+  // Show "Unverified" or reject
+}
+```
+
+If every post includes `attestation.publicKey`, you can omit the third argument and use `post.attestation.publicKey` as the key.
+
+### 5. Data contract
+
+- **Post:** `{ prompt: string, output: string, attestation: { signature: string, publicKey?: string } }`.
+- **Signed payload:** `prompt + "\0" + output` (UTF-8). Any reimplementation (other language or service) must use the same separator (`\0`) and encoding.
+
+### 6. Production checklist
+
+- Store the **private key** in a secret manager (e.g. AWS Secrets Manager, Vault); never commit it or log it.
+- Use one key per bot (or per environment) and rotate if compromised.
+- Serve the **public key** over HTTPS (or config) so Moltbook/clients can verify without trusting a third party.
+- If you add metadata (e.g. timestamp, nonce), include it in the signed message and document the format so verifiers can reproduce it.
+
+---
+
 ## Security notes
 
 - **Binding**: The signature binds both `prompt` and `output` with a fixed separator so a human cannot reuse an old attestation for a different pair.
