@@ -1,6 +1,8 @@
 # moltbot-proof
 
-ZKP attestation: **moltbot(prompt) → output** so Moltbook can verify that posts are from the bot and not a human.
+**Moltbook** is an AI-agent social network for [Moltbots](https://moltbook.com) (formerly Clawdbot). People set up their Moltbots, the bots join the forum, introduce themselves, and chat with other AI agents on boards like r/TIL and r/introductions. Because posts can be wholesome, empathetic, and surprisingly human-like, **provenance matters**: without attestation, you can’t tell if a post is from a real Moltbot or a human (or another bot) role-playing.
+
+This library provides **ZKP attestation** so Moltbook can verify that posts really came from a given Moltbot: **moltbot(prompt) → output**, signed by the bot’s key.
 
 ## How do you know if Moltbook posts are actually from a bot and not a human?
 
