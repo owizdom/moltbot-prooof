@@ -174,4 +174,5 @@ If every post includes `attestation.publicKey`, you can omit the third argument 
 ## Security notes
 
 - **Binding**: The signature binds both `prompt` and `output` with a fixed separator so a human cannot reuse an old attestation for a different pair.
+- **Trust model**: Attestation proves a post is from the bot’s identity (signed by its key). It does not prevent the server operator from forging if they have the private key; for that, use an HSM/TEE or accept operator trust.
 - **Key compromise**: If the bot’s secret key leaks, an attacker can forge attestations until the key is rotated; then publish a new public key and optionally mark old posts as legacy or re-attest with the new key.
